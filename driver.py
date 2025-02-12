@@ -1,7 +1,7 @@
 from write_through_cache import CacheBlock, WriteThourghCache
 from Write_back_Cache import CacheBlock, WriteBackCache
 
-def simulate_write_throught_caches(trace, associativities, hit_time=1, miss_penalty=100):
+def simulate_write_through_caches(trace, associativities, hit_time=1, miss_penalty=100):
     print ("Simulate Write Throught Caches")
     for assoc in associativities:
         instr_cache = WriteThourghCache(total_size=1024, block_size=32, associativity=assoc)
@@ -62,7 +62,7 @@ def main():
 
     associativities = [1, 2, 4, 8, 16, 32]
 
-    simulate_write_throught_caches(trace, associativities)
+    simulate_write_through_caches(trace, associativities)
     simulate_write_back_caches(trace, associativities)
 
 main()

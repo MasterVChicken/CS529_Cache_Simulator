@@ -5,10 +5,11 @@ class CacheBlock:
 
 
 class WriteBackCache:
-    def __init__(self, total_size, block_size, associativity):
+    def __init__(self, total_size, block_size, associativity, lower_level_cache=None):
         self.total_size = total_size
         self.block_size = block_size
         self.associativity = associativity
+        self.lower_level_cache = lower_level_cache
 
         self.num_sets = total_size // (block_size * associativity)
 
@@ -19,7 +20,6 @@ class WriteBackCache:
         self.read_misses = 0
         self.write_hits = 0
         self.write_misses = 0
-        self.write_backs = 0
 
     def _translate_ad_to_set_tag(self, address):
 
@@ -52,7 +52,12 @@ class WriteBackCache:
         if len(cache_set) >= self.associativity:
             evicted = cache_set.pop(-1)
             if evicted.dirty:
-                self.write_backs += 1
+                if self.lower_level_cache:
+                    evicted_address = (evicted.tag * self.num_sets + set_index) * self.block_size
+                    self.lower_level_cache.write(evicted_address)
+        # Read from L2
+        if self.lower_level_cache:
+            self.lower_level_cache.read(address)
 
         cache_set.insert(0, new_block)
 
@@ -71,11 +76,17 @@ class WriteBackCache:
 
         # Write miss
         self.write_misses += 1
-        new_block = CacheBlock(tag)
-        new_block.dirty = True
-        # If set is full, discard block based on LRU
+
         if len(cache_set) >= self.associativity:
             evicted = cache_set.pop(-1)
             if evicted.dirty:
-                self.write_backs += 1
+                evicted_address = (evicted.tag * self.num_sets + set_index) * self.block_size
+                if self.lower_level_cache:
+                    self.lower_level_cache.write(evicted_address)
+
+        if self.lower_level_cache:
+            self.lower_level_cache.read(address)
+
+        new_block = CacheBlock(tag)
+        new_block.dirty = True
         cache_set.insert(0, new_block)
