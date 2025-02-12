@@ -11,7 +11,7 @@ class WriteThourghCache:
 
         self.num_sets = total_size // (block_size * associativity)
         # cache
-        self.cache = [[] for _ in range(self.num_set)]
+        self.cache = [[] for _ in range(self.num_sets)]
 
         self.hits = 0
         self.miss = 0
