@@ -1,5 +1,7 @@
 from write_through_cache import CacheBlock, WriteThourghCache
 from Write_back_Cache import CacheBlock, WriteBackCache
+import matplotlib.pyplot as plt
+import pandas as pd
 
 def simulate_write_through_caches(trace, associativities, hit_time=1, miss_penalty=100):
     print ("Simulate Write Throught Caches")
@@ -113,10 +115,83 @@ def avg_records(res, num_test, num_item):
                 res[0][z][j] += res[i][z][j]
     
     for j in range(num_test):
-        for i in range(1,num_test):
+        for i in range(1,num_item):
             res[0][j][i] /= 3
     
     return res[0]
+
+def form_data_frame(ls):
+    data = pd.DataFrame(ls)
+    data.columns = ['Assoc', 'L1I_accesses', 'L1I_misses', 'L1I_hit_rate', 'L1D_accesses', 'L1D_misses', \
+                         'L1D_hit_rate', 'L2_accesses', 'L2_misses', 'L2_hit_rate', 'AMAT']
+    return data
+
+def cache_L1I_fig(data):
+    fig, ax1 = plt.subplots()
+
+    plt.title("L1 Instruction Cache")
+
+    ax1.plot(data["Assoc"], data["L1I_accesses"], 'o', ls='-',color="blue", label='L1I accesses')
+    ax1.plot(data["Assoc"], data["L1I_misses"], 'o', ls='-',color="orange", label='L1I misses')
+    ax1.set_ylabel('Times')
+    ax1.set_xlabel('Assoc')
+    
+    ax2 = ax1.twinx()
+    ax2.plot(data["Assoc"], data["L1I_hit_rate"], 'o', ls='-',color="red", label='L1I hit rate')
+    ax2.set_ylabel('Rate',color="red")
+    ax2.tick_params(axis='y', labelcolor='red')
+    
+    fig.legend(loc="upper right")
+    plt.savefig("./figures/L1I.jpg", dpi = 300)
+
+def cache_L1D_fig(data):
+    fig, ax1 = plt.subplots()
+    
+    plt.title("L1 Data cache")
+    
+    ax1.plot(data["Assoc"], data["L1D_accesses"], 'o', ls='-', color="blue", label='L1D accesses')
+    ax1.plot(data["Assoc"], data["L1D_misses"], 'o', ls='-',color="orange", label='L1D misses')
+    ax1.set_ylabel('Times')
+    ax1.set_xlabel('Assoc')
+    
+    ax2 = ax1.twinx()
+    ax2.plot(data["Assoc"], data["L1D_hit_rate"], 'o', ls='-',color="red", label='L1D hit rate')
+    ax2.set_ylabel('Rate',color="red")
+    ax2.tick_params(axis='y', labelcolor='red')
+    
+    fig.legend(loc="upper right")
+    
+    plt.savefig("./figures/L1D.jpg", dpi = 300)
+
+def cache_L2_fig(data):
+    fig, ax1 = plt.subplots()
+
+    plt.title("L2 Cache")
+    
+    ax1.plot(data["Assoc"], data["L2_accesses"], 'o', ls='-',color="blue", label='L2 accesses')
+    ax1.plot(data["Assoc"], data["L2_misses"], 'o', ls='-', color="orange", label='L2 misses')
+    ax1.set_ylabel('Times')
+    ax1.set_xlabel('Assoc')
+    
+    ax2 = ax1.twinx()
+    ax2.plot(data["Assoc"], data["L2_hit_rate"], 'o', ls='-', color="red", label='L2 hit rate')
+    ax2.set_ylabel('Rate', color="red")
+    ax2.tick_params(axis='y', labelcolor='red')
+    
+    fig.legend(loc="upper right")
+    
+    plt.savefig("./figures/L2.jpg", dpi = 300)
+
+def AMAT_fig(data):
+    fig, ax1 = plt.subplots()
+
+    plt.title("AMAT")
+    
+    ax1.plot(data["Assoc"], data["AMAT"], 'o', ls='-', color="blue", label='AMAT')
+    ax1.set_ylabel('Time')
+    ax1.set_xlabel('Assoc')
+    
+    plt.savefig("./figures/AMAT.jpg", dpi = 300)
     
 
 def main():
@@ -140,7 +215,7 @@ def main():
 
         associativities = [1, 2, 4, 8, 16, 32, 64, 128]
         resL1L2.append(simulate_L1_L2(trace, associativities))
-
+        
     resWT = avg_records(resWT, 6, 8)
     resWB = avg_records(resWB, 6, 8)
     resL1L2 = avg_records(resL1L2,8, 10)
@@ -151,6 +226,13 @@ def main():
     print("avg WB: ", resWB)
     print("------------------------------------------------------")
     print("avg L1L2: ", resL1L2)
+
+    print("Figures")
+    data = form_data_frame(resL1L2)
+    cache_L1I_fig(data)
+    cache_L1D_fig(data)
+    cache_L2_fig(data)
+    AMAT_fig(data)
 
 
 main()
