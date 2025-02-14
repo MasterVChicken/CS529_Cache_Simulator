@@ -34,10 +34,10 @@ class WriteBackCache:
         self.block_size = block_size
         self.associativity = associativity
         self.lower_level_cache = lower_level_cache
-        self.victim_cache = victim_cache  # Add victim cache support
+        self.victim_cache = victim_cache
 
         self.num_sets = total_size // (block_size * associativity)
-        self.cache = [[] for _ in range(self.num_sets)]  # Initialize empty sets
+        self.cache = [[] for _ in range(self.num_sets)]
 
         self.read_hits = 0
         self.read_misses = 0
