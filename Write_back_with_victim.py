@@ -5,26 +5,26 @@ class CacheBlock:
 
 class VictimCache:
     def __init__(self, size):
-        self.size = size  # Number of blocks in the victim cache
-        self.cache = []   # Fully associative storage
+        self.size = size
+        self.cache = []
+        self.hits = 0
+        self.miss = 0
 
     def lookup(self, tag):
-        """Check if the tag exists in the victim cache."""
         for i, block in enumerate(self.cache):
             if block.tag == tag:
-                # Move accessed block to front (LRU policy)
                 self.cache.insert(0, self.cache.pop(i))
+                self.hits += 1
                 return block
-        return None  # Miss
+        self.miss += 1
+        return
 
     def insert(self, evicted_block):
-        """Insert an evicted block from L2 into the victim cache."""
         if len(self.cache) >= self.size:
-            self.cache.pop(-1)  # Evict oldest block (FIFO)
-        self.cache.insert(0, evicted_block)  # Insert new block at the front
+            self.cache.pop(-1)
+        self.cache.insert(0, evicted_block)
 
     def remove(self, tag):
-        """Remove a block manually (e.g., when moving to L2)."""
         self.cache = [block for block in self.cache if block.tag != tag]
 
 
@@ -57,7 +57,7 @@ class WriteBackCache:
         # Check L1/L2 cache first
         for i, block in enumerate(cache_set):
             if block.tag == tag:
-                cache_set.insert(0, cache_set.pop(i))  # Move to front (LRU)
+                cache_set.insert(0, cache_set.pop(i))
                 self.read_hits += 1
                 return
 
@@ -67,13 +67,15 @@ class WriteBackCache:
             if victim_block:
                 self.victim_cache.remove(tag)
                 if len(cache_set) >= self.associativity:
-                    evicted = cache_set.pop(-1)  # Remove LRU block
-                    self.victim_cache.insert(evicted)  # Move evicted block to Victim Cache
-                cache_set.insert(0, victim_block)  # Move block from victim to L2
+                    # Remove LRU block
+                    evicted = cache_set.pop(-1)
+                    # Move evicted block to Victim Cache
+                    self.victim_cache.insert(evicted)
+                cache_set.insert(0, victim_block) 
                 self.read_hits += 1
                 return
 
-        # Read from lower level (L3 or main memory)
+        # Read from lower level
         self.read_misses += 1
         if self.lower_level_cache:
             self.lower_level_cache.read(address)
@@ -83,7 +85,7 @@ class WriteBackCache:
         if len(cache_set) >= self.associativity:
             evicted = cache_set.pop(-1)
             if self.victim_cache:
-                self.victim_cache.insert(evicted)  # Store evicted block in victim cache
+                self.victim_cache.insert(evicted)
             else:
                 if self.lower_level_cache:
                     evicted_address = (evicted.tag * self.num_sets + set_index) * self.block_size
@@ -97,12 +99,12 @@ class WriteBackCache:
 
         for i, block in enumerate(cache_set):
             if block.tag == tag:
-                cache_set.insert(0, cache_set.pop(i))  # Move to front
+                cache_set.insert(0, cache_set.pop(i))
                 block.dirty = True
                 self.write_hits += 1
                 return
 
-        # L2 Miss: Check Victim Cache before main memory
+        # L2 Miss: Check Victim Cache
         if self.victim_cache:
             victim_block = self.victim_cache.lookup(tag)
             if victim_block:
